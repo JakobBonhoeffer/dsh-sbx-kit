@@ -51,8 +51,8 @@ All commands below run on the host in PowerShell.
 workspace, further paths are optional extra mounts (`:ro` makes one read-only).
 
 ```powershell
-git clone https://github.com/JakobBonhoeffer/DSH-DockerSandboxKit
-sbx run .\DSH-DockerSandboxKit\dsh --name dsh-main C:\work\dsh_work
+git clone https://github.com/JakobBonhoeffer/dsh-sbx-kit
+sbx run .\dsh-sbx-kit\dsh --name dsh-main C:\work\dsh_work
 ```
 
 `sbx` builds the kit on first use and starts a login shell in the new sandbox.
@@ -150,7 +150,7 @@ To run several sandboxes from one kit, give each a unique lowercase name and its
 own host port:
 
 ```powershell
-sbx run .\DSH-DockerSandboxKit\dsh --name dsh-two C:\work\other_project
+sbx run .\dsh-sbx-kit\dsh --name dsh-two C:\work\other_project
 sbx ports dsh-two --publish 18081:3081
 ```
 
