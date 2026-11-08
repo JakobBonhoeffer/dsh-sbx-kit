@@ -1,0 +1,84 @@
+# syntax=docker/sandbox-kit:3
+schemaVersion: "3"
+displayName: DeepSeek Harness
+description: >-
+  Ubuntu 26.04 shell sandbox with Node 24, DeepSeek Harness (web UI on a published
+  loopback port) and reverse-engineering / ESP32 / Android tooling.
+sourceUrl: https://github.com/deepseek-ai/deepseek-harness
+licenses: [MIT]
+
+kind: workload
+version: "0.1.0"
+
+# Build-time arguments; each drives the Dockerfile and the `provides` below, so a
+# version bump is one edit here (or --kit-arg at create time).
+args:
+  nodeVersion:
+    default: "24.22.2"
+    pattern: '^[0-9]+\.[0-9]+\.[0-9]+$'
+    description: Node.js release to install
+    buildArg: NODE_VERSION
+  dshVersion:
+    default: "0.2.2-rc.1"
+    pattern: '^[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.]+)?$'
+    description: "@deepseek-ai/dsh release to install"
+    buildArg: DSH_VERSION
+
+provides:
+  - "dsh@${{ kit.args.dshVersion }}"
+  - "node@${{ kit.args.nodeVersion }}"
+
+capabilities:
+  # The host launches the agent (a login shell) instead of making the image
+  # entrypoint PID 1, and honors the image's user (agent).
+  - type: com.docker.sandbox/sbx@1
+
+  # Start DSH and the socat forwarder on every boot. Background: do not block boot.
+  - type: com.docker.sandbox/lifecycle@1
+    config:
+      startup:
+        - command: [bash, -lc, dsh-start]
+          background: true
+          description: Start dsh web (127.0.0.1:3080) and the socat forwarder (0.0.0.0:3081)
+
+  # Keep the sandbox alive after the last terminal disconnects, otherwise the web
+  # UI would die as soon as you close the shell.
+  - type: com.docker.sandbox/long-running@1
+
+  # Ask the host to publish the forwarder port on loopback. The host picks the host
+  # port (see `sbx ports <name>`); you approve the request when the sandbox is created.
+  - type: com.docker.sandbox/port@1
+    config:
+      name: dsh-web
+      container: 3081
+      transport: tcp
+
+  # Network access is governed by your global sbx policy (`sbx policy ls`).
+  # No network-policy entry here on purpose: the kit does not widen or narrow
+  # what you have configured. DSH needs outbound HTTPS to your model providers.
+
+  # Short briefing for the models: where things are and what exists.
+  - type: com.docker.sandbox/agent-context@1
+    optional: true
+    config: &agent-context
+      filename: AGENTS.md
+      content: |
+        # Sandbox briefing
+
+        You run inside a Docker Sandbox (Ubuntu 26.04 microVM), user `agent`, with
+        passwordless `sudo`. Internet access works; the local network is not
+        reachable. Windows drives are mounted at the lowercase drive letter,
+        e.g. `P:\work` appears as `/p/work`.
+
+        Installed: git, curl, jq, ripgrep, tmux, vim, build-essential, cmake,
+        Python 3 (+ venv at /opt/re-venv with esptool, pyserial, capstone,
+        unicorn, r2pipe), Node 24, binwalk, radare2, gdb/gdb-multiarch,
+        binutils-multiarch, strace, squashfs-tools, yara, nmap, tcpdump,
+        picocom, minicom, adb, apktool, Java, and a Docker engine.
+        Some optional packages may be missing (see
+        /usr/share/dsh-kit-skipped.txt). Install anything else with
+        `sudo apt`, `pip` or `npm`.
+
+  - type: com.docker.sandbox/agent-context@2
+    optional: true
+    config: *agent-context

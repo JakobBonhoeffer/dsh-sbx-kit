@@ -1,0 +1,49 @@
+# syntax=docker/sandbox-kit:3
+#
+# UNTESTED. This mixin was written from the kit specification but has never been
+# applied to a sandbox with real hardware attached. Whether `sbx` passes USB
+# devices through on your host OS is unverified. Read usb-esp32/README.md first.
+schemaVersion: "3"
+displayName: USB passthrough for ESP32 boards
+description: >-
+  Capability-only mixin: asks the host to pass common ESP32 USB-serial bridges
+  (CP210x, CH340, CH9102, FTDI) and Espressif's native USB (JTAG/CDC, ROM
+  download mode) through to the sandbox, and puts the agent user in the
+  dialout group so it may open /dev/ttyUSB* and /dev/ttyACM*.
+
+kind: mixin
+version: "0.1.0"
+provides: ["usb-esp32@0.1.0"]
+
+capabilities:
+  - type: com.docker.sandbox/usb-device@1
+    optional: true
+    description: Silicon Labs CP210x (many ESP32 DevKit boards)
+    config: {vendorId: "10c4", productId: "ea60"}
+  - type: com.docker.sandbox/usb-device@1
+    optional: true
+    description: WCH CH340 (cheap ESP32 boards)
+    config: {vendorId: "1a86", productId: "7523"}
+  - type: com.docker.sandbox/usb-device@1
+    optional: true
+    description: WCH CH9102 (newer ESP32 boards)
+    config: {vendorId: "1a86", productId: "55d4"}
+  - type: com.docker.sandbox/usb-device@1
+    optional: true
+    description: FTDI FT232
+    config: {vendorId: "0403", productId: "6001"}
+  - type: com.docker.sandbox/usb-device@1
+    optional: true
+    description: Espressif native USB (ESP32-S3 / C3 JTAG-serial)
+    config: {vendorId: "303a", productId: "1001"}
+  - type: com.docker.sandbox/usb-device@1
+    optional: true
+    description: Espressif ROM download mode (ESP32-S2 / S3)
+    config: {vendorId: "303a", productId: "0002"}
+
+  - type: com.docker.sandbox/lifecycle@1
+    config:
+      install:
+        - command: "usermod -aG dialout agent || true"
+          user: "0"
+          description: Allow the agent user to open serial devices

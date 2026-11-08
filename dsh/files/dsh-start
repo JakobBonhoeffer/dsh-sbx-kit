@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Idempotent: safe to run on every sandbox boot.
+#   1. dsh web   -> listens on 127.0.0.1:3080 INSIDE the sandbox (DSH refuses 0.0.0.0)
+#   2. socat     -> listens on 0.0.0.0:3081 and forwards to 127.0.0.1:3080, so the
+#                   sandbox port publishing (sbx ports) can reach it from the host.
+# The startup hook runs in a shell whose PATH misses the npm global bin dir,
+# so set it explicitly (otherwise: "nohup: failed to run command 'dsh'").
+export PATH="/usr/local/share/npm-global/bin:/usr/local/bin:$PATH"
+LOG="$HOME/.dsh-web.log"
+
+if ! pgrep -f "dsh web" >/dev/null 2>&1; then
+  cd "$HOME" || exit 1
+  setsid nohup dsh web --no-open >>"$LOG" 2>&1 </dev/null &
+fi
+
+if ! pgrep -x socat >/dev/null 2>&1; then
+  setsid nohup socat TCP-LISTEN:3081,fork,reuseaddr,bind=0.0.0.0 TCP:127.0.0.1:3080 \
+    >>"$HOME/.dsh-socat.log" 2>&1 </dev/null &
+fi
+
+exit 0

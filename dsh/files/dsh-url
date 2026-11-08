@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Prints the URL (with the one-time launch token) for the DSH web UI.
+# Usage: dsh-url HOST_PORT      (HOST_PORT = the port `sbx ports NAME` shows on Windows)
+port="${1:-}"
+if [ -z "$port" ]; then
+  echo "usage: dsh-url HOST_PORT   (see 'sbx ports <sandbox>' on the host)" >&2
+  exit 2
+fi
+tok="$(grep -o 'token=[A-Za-z0-9_-]*' "$HOME/.dsh-web.log" 2>/dev/null | tail -1)"
+if [ -z "$tok" ]; then
+  echo "no token found yet; is dsh running? try: dsh-start; sleep 5; dsh-url $port" >&2
+  exit 1
+fi
+echo "http://127.0.0.1:${port}/?${tok}"

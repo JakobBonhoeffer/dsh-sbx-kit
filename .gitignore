@@ -1,0 +1,23 @@
+# Local, private notes and agent working files (never published)
+.claude/
+
+# Secrets and local configuration
+.env
+.env.*
+*.pem
+*.key
+*.credentials.yaml
+
+# Exported sandbox templates and build output
+*.tar
+*.tar.gz
+out/
+dist/
+
+# Editor / OS noise
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
