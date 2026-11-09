@@ -32,8 +32,8 @@ skipped.
    ```
 3. Add the mixin to an existing sandbox (host):
    ```powershell
-   sbx kit add dsh-main .\usb-esp32
-   sbx run --name dsh-main
+   sbx kit add <name> .\usb-esp32
+   sbx run --name <name>
    ```
 4. Check inside the sandbox: `lsusb`, `ls -l /dev/ttyUSB* /dev/ttyACM*`, `id`,
    `esptool chip-id`. Use only `chip-id` for a first test, not `write-flash`.

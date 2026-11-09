@@ -64,11 +64,11 @@ Run on the host (PowerShell). Existing sandboxes do not pick up kit changes, so
 test with a new one.
 
 ```powershell
-sbx run .\dsh --name dsh-test C:\work\dsh_test      # builds the kit, creates the sandbox
-sbx ports dsh-test --publish 18080:3081
-sbx exec dsh-test bash -lc "dsh-url 18080"           # token URL
-sbx -D run --name dsh-test                           # debug output
-sbx rm dsh-test                                      # clean up
+sbx run .\dsh --name <name> <workspace>             # builds the kit, creates the sandbox
+sbx ports <name> --publish <host-port>:3081
+sbx exec <name> bash -lc "dsh-url <host-port>"       # token URL
+sbx -D run --name <name>                             # debug output
+sbx rm <name>                                        # clean up
 ```
 
 Inside the sandbox: `ss -ltnp | grep -E ':3080|:3081'`, `tail -n 20 ~/.dsh-web.log`,

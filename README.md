@@ -45,43 +45,61 @@ Install them in the sandbox and save the result with `sbx template save`.
 
 ## Quick start
 
-All commands below run on the host in PowerShell.
+All commands below run on the host in PowerShell. Replace the placeholders in
+angle brackets with your own values:
+
+| Placeholder | Meaning |
+|---|---|
+| `<name>` | Name you choose for the sandbox. Lowercase, unique per sandbox. |
+| `<workspace>` | Folder on your computer that the agent may read and write, for example `C:\work\my_project`. |
+| `<host-port>` | Free port on your computer for the web UI, for example `18080`. Use a different one per sandbox. |
 
 **1. Get the kit and create the sandbox.** The first path is the primary
 workspace, further paths are optional extra mounts (`:ro` makes one read-only).
 
 ```powershell
 git clone https://github.com/JakobBonhoeffer/dsh-sbx-kit
-sbx run .\dsh-sbx-kit\dsh --name dsh-main C:\work\dsh_work
+sbx run .\dsh-sbx-kit\dsh --name <name> <workspace>
 ```
 
 `sbx` builds the kit on first use and starts a login shell in the new sandbox.
 You can leave it with `exit`: the kit keeps the sandbox running.
 
 **2. Publish the web UI on a fixed host port.** Without this, `sbx` picks a
-random port that changes on every start.
+random port that changes on every start. The sandbox side is always `3081`.
 
 ```powershell
-sbx ports dsh-main --publish 18080:3081
+sbx ports <name> --publish <host-port>:3081
 ```
 
 **3. Store your API key on the host** (see [API keys](#api-keys)).
 
-**4. Open the web UI.** DSH prints a launch token each time it starts. This
-prints a ready-to-use URL:
+**4. Open the web UI.** DSH creates a new launch token each time it starts. The
+helper `dsh-url` prints a ready-to-use address with that token. It needs the
+host port from step 2, because the address points at your computer, not at the
+sandbox. Run it in one of two ways:
+
+*From the host (PowerShell)*, without entering the sandbox:
 
 ```powershell
-sbx exec dsh-main bash -lc "dsh-url 18080"
+sbx exec <name> bash -lc "dsh-url <host-port>"
 ```
 
-Open the printed `http://127.0.0.1:18080/?token=...` address in your browser or
+*From inside the sandbox*, if you are already in its shell (for example right
+after `sbx run`, or after `sbx exec -it <name> bash`):
+
+```bash
+dsh-url <host-port>
+```
+
+Open the printed `http://127.0.0.1:<host-port>/?token=...` address in your browser or
 connect with [dsh-sbx-client](https://github.com/JakobBonhoeffer/dsh-sbx-client).
 DSH exchanges the token for a session cookie, so you need it only once per
 browser profile. To skip the manual step in the client, set its login command to
 `dsh-url {port}`; see the client README.
 
-Day-to-day commands: `sbx ls`, `sbx stop dsh-main`, `sbx run --name dsh-main`,
-`sbx ports dsh-main`. To start over, `sbx rm dsh-main` and repeat step 1 and 2.
+Day-to-day commands: `sbx ls`, `sbx stop <name>`, `sbx run --name <name>`,
+`sbx ports <name>`. To start over, `sbx rm <name>` and repeat step 1 and 2.
 
 ## API keys
 
@@ -107,10 +125,10 @@ here because DSH takes the placeholder directly.
 
 ```
 Host (Windows)
-  Browser / dsh-sbx-client ──> 127.0.0.1:18080 ──┐
-  sbx + daemon (egress proxy, secret store)      │ published port
-                                                 v
-  microVM "dsh-main" (own kernel)
+  Browser / dsh-sbx-client ──> 127.0.0.1:<host-port> ──┐
+  sbx + daemon (egress proxy, secret store)            │ published port
+                                                       v
+  microVM "<name>" (own kernel)
     socat 0.0.0.0:3081 ──> 127.0.0.1:3080 (dsh web)
     mounts: your folders only
 ```
@@ -150,8 +168,8 @@ To run several sandboxes from one kit, give each a unique lowercase name and its
 own host port:
 
 ```powershell
-sbx run .\dsh-sbx-kit\dsh --name dsh-two C:\work\other_project
-sbx ports dsh-two --publish 18081:3081
+sbx run .\dsh-sbx-kit\dsh --name <other-name> <other-workspace>
+sbx ports <other-name> --publish <other-host-port>:3081
 ```
 
 ## Security model
